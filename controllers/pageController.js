@@ -2,13 +2,14 @@ import {
   createLongLivedToken,
   getPageAccessToken,
   refreshAllTokens,
-} from "../helpers/tokenHelpers";
-import Page from "../models/Page";
+} from "../helpers/tokenHelpers.js";
+import Page from "../models/Page.js";
 
 export const addPage = async (req, res) => {
   try {
     const { page_name, page_id, short_lived_token, app_id, app_secret } =
       req.body;
+    console.log(req.body);
 
     // প্রথমবারের জন্য Short-Lived Token দিয়ে Long-Lived User Token তৈরি
     const longLivedUserTokenData = await createLongLivedToken(

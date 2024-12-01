@@ -4,8 +4,8 @@ import {
   findAllPage,
   deletePageByPageId,
   findOnePageByPageName,
-} from "../controllers/pageController";
-import { refreshAllTokens } from "../helpers/tokenHelpers";
+} from "../controllers/pageController.js";
+import { refreshAllTokens } from "../helpers/tokenHelpers.js";
 
 const router = express.Router();
 

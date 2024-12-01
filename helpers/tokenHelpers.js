@@ -1,5 +1,5 @@
 import axios from "axios";
-import Page from "../models/Page";
+import Page from "../models/Page.js";
 
 // Function: Short-Lived Token থেকে Long-Lived User Token তৈরি করা
 export const createLongLivedToken = async (
