@@ -24,4 +24,16 @@ scheduleJob("0 0 */5 * *", () => {
   refreshAllTokens();
 });
 
+// Setting up schedules (Bangladesh Time)
+const scheduleTimes = [
+  "0 16 * * *",
+  "0 18 * * *",
+  "0 20 * * *",
+  "0 21 * * *",
+  "0 22 * * *",
+];
+
+// Iterate over each schedule time and set up a job to call uploadAllPages at the specified time
+scheduleTimes.forEach((time) => scheduleJob(time, () => console.log("ok")));
+
 export default app;
