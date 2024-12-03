@@ -1,14 +1,24 @@
 import express from "express";
+import cors from "cors";
 import connectDB from "./config/db.js";
 import userRoutes from "./routes/userRoutes.js";
 import contentRoutes from "./routes/contentRoutes.js";
 import pageRoutes from "./routes/pageRoutes.js";
 import { scheduleJob } from "node-schedule";
+import { uploadVideoToFacebookContentAllPages } from "./helpers/contentUploadHelpers.js";
 
 const app = express();
 
 // Middleware
 app.use(express.json());
+app.use(cors());
+
+// Or enable CORS for specific origins
+app.use(
+  cors({
+    origin: "http://localhost:3000", // React App
+  })
+);
 
 // Database Connection
 connectDB();
@@ -23,6 +33,8 @@ scheduleJob("0 0 */5 * *", () => {
   console.log("Scheduled token refresh initiated (every 5 days).");
   refreshAllTokens();
 });
+
+uploadVideoToFacebookContentAllPages()
 
 // Setting up schedules (Bangladesh Time)
 const scheduleTimes = [

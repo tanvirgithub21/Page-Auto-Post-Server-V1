@@ -68,7 +68,11 @@ export const refreshTokens = async (req, res) => {
 // Get all pages
 export const findAllPage = async (req, res) => {
   try {
-    const pages = await Page.find();
+    const pages = await Page.find().select({
+      page_name: 1,
+      page_id: 1,
+      _id: 1,
+    });
     if (pages.length === 0) {
       return res.status(404).json({ message: "No pages found" });
     }

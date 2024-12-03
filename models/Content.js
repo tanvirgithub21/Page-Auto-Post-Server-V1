@@ -6,6 +6,7 @@ const contentSchema = new mongoose.Schema(
     duration: Number,
     page_id: String,
     page_name: String,
+    description: String,
     playback_url: String,
     public_id: String,
     secure_url: String,
