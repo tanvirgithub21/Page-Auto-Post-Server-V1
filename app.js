@@ -46,7 +46,10 @@ const scheduleTimes = [
   "0 22 * * *",
 ];
 
+
 // Iterate over each schedule time and set up a job to call uploadAllPages at the specified time
 scheduleTimes.forEach((time) => scheduleJob(time, () => console.log("ok")));
+
+
 
 export default app;

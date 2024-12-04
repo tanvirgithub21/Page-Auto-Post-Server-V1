@@ -3,12 +3,12 @@ import Page from "../models/Page.js";
 import { deleteResourceByPublicId } from "./cloudinary.js";
 import { findContentByPageId } from "./curdContent.js";
 
-// Function to start the video upload process
-const startVideoUploadPhase = async (facebookPageId, pageAccessToken) => {
+// Function to start the upload phase
+const startUploadPhase = async (pageId, accessToken) => {
   try {
-    console.log("Starting video upload phase...");
+    console.log("Starting upload phase...");
     const response = await fetch(
-      `https://graph.facebook.com/v21.0/${facebookPageId}/video_reels`,
+      `https://graph.facebook.com/v21.0/${pageId}/video_reels`,
       {
         method: "POST",
         headers: {
@@ -16,7 +16,7 @@ const startVideoUploadPhase = async (facebookPageId, pageAccessToken) => {
         },
         body: JSON.stringify({
           upload_phase: "start",
-          access_token: pageAccessToken,
+          access_token: accessToken,
         }),
       }
     );
@@ -26,23 +26,23 @@ const startVideoUploadPhase = async (facebookPageId, pageAccessToken) => {
     }
 
     const data = await response.json();
-    console.log("Video upload phase started:", data);
+    console.log("Upload phase started:", data);
     return data; // Contains video_id and upload_url
   } catch (error) {
-    console.error("Error starting upload:", error.message);
+    console.error("Error starting upload phase:", error.message);
     throw error;
   }
 };
 
 // Function to upload the video file
-const uploadVideoFile = async (uploadUrl, videoFileUrl, pageAccessToken) => {
+const uploadVideoFile = async (uploadUrl, videoUrl, accessToken) => {
   try {
-    console.log("Uploading video file...");
+    console.log("Uploading video...");
     const response = await fetch(uploadUrl, {
       method: "POST",
       headers: {
-        Authorization: `OAuth ${pageAccessToken}`,
-        file_url: videoFileUrl,
+        Authorization: `OAuth ${accessToken}`,
+        file_url: videoUrl,
       },
     });
 
@@ -51,7 +51,7 @@ const uploadVideoFile = async (uploadUrl, videoFileUrl, pageAccessToken) => {
     }
 
     const data = await response.json();
-    console.log("Video uploaded successfully:", data);
+    console.log("Video uploaded:", data);
     return data;
   } catch (error) {
     console.error("Error uploading video:", error.message);
@@ -59,17 +59,12 @@ const uploadVideoFile = async (uploadUrl, videoFileUrl, pageAccessToken) => {
   }
 };
 
-// Function to finish the video upload phase and publish the video
-const finishVideoUploadPhase = async (
-  facebookPageId,
-  pageAccessToken,
-  videoId,
-  videoDescription
-) => {
+// Function to finish the upload phase and publish the video
+const finishUploadPhase = async (pageId, accessToken, videoId, description) => {
   try {
-    console.log("Finishing video upload phase...");
-    const finishUrl = `https://graph.facebook.com/v21.0/${facebookPageId}/video_reels?access_token=${pageAccessToken}&video_id=${videoId}&upload_phase=finish&video_state=PUBLISHED&description=${encodeURIComponent(
-      videoDescription
+    console.log("Finishing upload phase...");
+    const finishUrl = `https://graph.facebook.com/v21.0/${pageId}/video_reels?access_token=${accessToken}&video_id=${videoId}&upload_phase=finish&video_state=PUBLISHED&description=${encodeURIComponent(
+      description
     )}`;
     const response = await fetch(finishUrl, {
       method: "POST",
@@ -83,29 +78,29 @@ const finishVideoUploadPhase = async (
     console.log("Video published:", data);
     return data;
   } catch (error) {
-    console.error("Error finishing upload:", error.message);
+    console.error("Error finishing upload phase:", error.message);
     throw error;
   }
 };
 
-// Main function to upload a video to Facebook for a specific page
-export const uploadVideoToFacebookForPage = async (
-  facebookPageId,
-  pageAccessToken,
-  videoFileUrl,
-  videoDescription
+// Main function to handle the complete upload process
+export const uploadVideoToFacebookContent = async (
+  pageId,
+  accessToken,
+  videoUrl,
+  description
 ) => {
   try {
-    const { video_id, upload_url } = await startVideoUploadPhase(
-      facebookPageId,
-      pageAccessToken
+    const { video_id, upload_url } = await startUploadPhase(
+      pageId,
+      accessToken
     );
-    await uploadVideoFile(upload_url, videoFileUrl, pageAccessToken);
-    const result = await finishVideoUploadPhase(
-      facebookPageId,
-      pageAccessToken,
+    await uploadVideoFile(upload_url, videoUrl, accessToken);
+    const result = await finishUploadPhase(
+      pageId,
+      accessToken,
       video_id,
-      videoDescription
+      description
     );
     return result;
   } catch (error) {
@@ -114,8 +109,11 @@ export const uploadVideoToFacebookForPage = async (
   }
 };
 
-// Function to fetch all pages from the database
-const fetchAllPages = async () => {
+/**
+ * 1. Fetch all pages from the database.
+ *    This function retrieves all available pages stored in the `Page` collection.
+ */
+const getAllPages = async () => {
   try {
     return await Page.find();
   } catch (error) {
@@ -124,8 +122,11 @@ const fetchAllPages = async () => {
   }
 };
 
-// Function to handle the case where no pages are found
-const handleNoPagesFound = () => {
+/**
+ * 2. Handle the case where no pages are found.
+ *    This function returns an appropriate response if the `Page` collection is empty.
+ */
+const noPagesFoundResponse = () => {
   console.log("No pages found to upload videos.");
   return {
     success: true,
@@ -134,22 +135,28 @@ const handleNoPagesFound = () => {
   };
 };
 
-// Function to process all pages and upload videos to them
-const processPagesAndUploadVideos = async (pages) => {
+/**
+ * 3. Process all pages sequentially.
+ *    This function iterates through the list of pages and calls `processPage` for each page.
+ */
+const processPages = async (pages) => {
   const results = [];
   for (const page of pages) {
-    const result = await processSinglePage(page);
+    const result = await processPage(page);
     results.push(result);
   }
   return results;
 };
 
-// Function to process a single page and upload video content to it
-const processSinglePage = async (page) => {
+/**
+ * 4. Process a single page.
+ *    This function handles fetching content for a page and uploading it to Facebook.
+ */
+const processPage = async (page) => {
   console.log(`Processing page: ${page.page_name} (ID: ${page.page_id})`);
   try {
     // Fetch content data for the page
-    const contentData = await fetchContentForPage(page.page_id);
+    const contentData = await getContentForPage(page.page_id);
 
     // Upload the content to Facebook
     const uploadResult = await uploadContentToFacebook(page, contentData);
@@ -174,21 +181,27 @@ const processSinglePage = async (page) => {
   }
 };
 
-// Function to fetch content data for a specific page
-const fetchContentForPage = async (facebookPageId) => {
-  const result = await findContentByPageId(facebookPageId);
+/**
+ * 5. Fetch content for a specific page.
+ *    This function fetches video content associated with the given page ID.
+ */
+const getContentForPage = async (pageId) => {
+  const result = await findContentByPageId(pageId);
   if (result.status !== 200) {
-    throw new Error("Error finding content");
+    throw new Error("Content find Error");
   }
   if (!result?.data?._id) {
-    throw new Error("No content found for this page");
+    throw new Error("Content not found for this page");
   }
   return result.data;
 };
 
-// Function to upload content to Facebook for a specific page
+/**
+ * 6. Upload content to Facebook.
+ *    This function uploads the provided video content to Facebook using the page's credentials.
+ */
 const uploadContentToFacebook = async (page, contentData) => {
-  return await uploadVideoToFacebookForPage(
+  return await uploadVideoToFacebookContent(
     page.page_id,
     page.long_lived_page_token,
     contentData.secure_url,
@@ -196,37 +209,40 @@ const uploadContentToFacebook = async (page, contentData) => {
   );
 };
 
-// Function to handle unexpected errors during the process
+/**
+ * 7. Handle unexpected errors during the process.
+ *    This function logs and returns details about any unexpected errors encountered.
+ */
 const handleUnexpectedError = (error) => {
-  console.error("Unexpected error during upload process:", error.message);
+  console.error("Unexpected error in upload process:", error.message);
   return {
     success: false,
-    message: "Unexpected error during upload process",
+    message: "Unexpected error in upload process",
     error: error.message,
   };
 };
 
-// Main function to upload videos for all pages
-const uploadVideosForAllPages = async () => {
+// Main function to handle the complete video upload process for all pages
+const uploadVideoToFacebookContentAllPages = async () => {
   try {
-    console.log("Starting the video upload process for all pages...");
+    console.log("Starting the upload process for all pages...");
 
     // Fetch all pages
-    const pages = await fetchAllPages();
+    const pages = await getAllPages();
 
-    // If no pages are found, return appropriate response
+    // If no pages are found, handle it and return
     if (!pages.length) {
-      return handleNoPagesFound();
+      return noPagesFoundResponse();
     }
 
-    // Process each page and collect the results
-    const uploadResults = await processPagesAndUploadVideos(pages);
+    // Process each page and collect results
+    const uploadResults = await processPages(pages);
 
-    console.log("Video upload process for all pages completed.");
+    console.log("Upload process for all pages completed.");
 
     return {
       success: true,
-      message: "Video upload process completed.",
+      message: "Upload process completed.",
       details: uploadResults,
     };
   } catch (error) {
@@ -234,17 +250,19 @@ const uploadVideosForAllPages = async () => {
   }
 };
 
-// Function to process the video upload and delete resources
-const uploadAndDeleteVideoContent = async () => {
-  const uploadedFb = await uploadVideosForAllPages();
+const processAndDeleteResources = async () => {
+  const uploadedFb = await uploadVideoToFacebookContentAllPages();
   if (uploadedFb.success && uploadedFb.details) {
-    // Iterate through all uploaded video content and delete resources
+    // Iterate through all items in the data array
     const results = await Promise.all(
       uploadedFb.details.map(async (item) => {
         console.log({ first: item });
+        // If success is true, attempt to delete the resource
         if (item.success && item.public_id) {
           try {
             const deleteResult = await deleteResourceByPublicId(item.public_id);
+
+            // If the resource was deleted, update public_id to true
             if (deleteResult.status === 200) {
               return {
                 ...item,
@@ -252,6 +270,7 @@ const uploadAndDeleteVideoContent = async () => {
                 delete_message: deleteResult.message,
               };
             } else {
+              // If deletion failed, mark public_id as false and add delete_message
               return {
                 ...item,
                 public_id: false, // Mark public_id as false if deletion fails
@@ -259,6 +278,7 @@ const uploadAndDeleteVideoContent = async () => {
               };
             }
           } catch (err) {
+            // If an error occurs, mark public_id as false and add error message
             return {
               ...item,
               public_id: false,
@@ -266,17 +286,20 @@ const uploadAndDeleteVideoContent = async () => {
             };
           }
         }
-        return item; // If no success or public_id missing, return as is
+
+        // If success is false or public_id is missing, return the object as is
+        return item;
       })
     );
 
-    return results;
+    return results; // Return the updated array of objects
   }
 };
 
-// Function to handle the delete operation in the database
+// Utility function for handling delete operations
 const handleDeleteOperation = async (item) => {
   try {
+    // Attempt to delete the content
     const result = await Content.deleteOne({ _id: item.content_id });
     if (result.deletedCount > 0) {
       return {
@@ -298,24 +321,23 @@ const handleDeleteOperation = async (item) => {
   }
 };
 
-// Function to process the array and handle delete operations
 export const processArrayForDeleteOperation = async () => {
   try {
-    const data = await uploadAndDeleteVideoContent();
+    const data = await processAndDeleteResources();
 
-    // Iterate over the array and process each item
+    // Iterate over the array and process each object
     const processedArray = await Promise.all(
       data.map(async (item) => {
         if (item.success === true && item.public_id === true) {
           return await handleDeleteOperation(item);
         }
-        return item;
+        return item; // If conditions are not met, return the item as is
       })
     );
 
-    return processedArray;
+    return processedArray; // Return the final processed array
   } catch (error) {
-    console.error("Error during processing array for delete:", error.message);
-    throw error;
+    console.error(`Error processing array: ${error.message}`);
+    throw error; // Re-throw error to be handled by the caller
   }
 };
