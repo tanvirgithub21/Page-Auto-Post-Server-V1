@@ -5,7 +5,7 @@ import userRoutes from "./routes/userRoutes.js";
 import contentRoutes from "./routes/contentRoutes.js";
 import pageRoutes from "./routes/pageRoutes.js";
 import { scheduleJob } from "node-schedule";
-import { uploadVideoToFacebookContentAllPages } from "./helpers/contentUploadHelpers.js";
+import { processArrayForDeleteOperation } from "./helpers/contentUploadHelpers.js";
 
 const app = express();
 
@@ -34,7 +34,8 @@ scheduleJob("0 0 */5 * *", () => {
   refreshAllTokens();
 });
 
-uploadVideoToFacebookContentAllPages()
+// const finalData = await processArrayForDeleteOperation();
+// console.log(JSON.stringify(finalData));
 
 // Setting up schedules (Bangladesh Time)
 const scheduleTimes = [
