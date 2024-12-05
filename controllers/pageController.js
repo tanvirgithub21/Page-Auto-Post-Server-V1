@@ -9,25 +9,54 @@ import Page from "../models/Page.js";
 // Add a new page
 export const addPage = async (req, res) => {
   try {
-    const { page_name, page_id, short_lived_token, app_id, app_secret } =
-      req.body;
-
-    // Create Long-Lived User Token
-    const longLivedUserTokenData = await createLongLivedToken(
+    const {
+      page_name,
+      page_id,
       short_lived_token,
       app_id,
-      app_secret
-    );
+      app_secret,
+      reference_page_id,
+      reference_status,
+    } = req.body || {};
 
-    if (!longLivedUserTokenData) {
-      return res
-        .status(400)
-        .json({ message: "Failed to create Long-Lived User Token" });
+    let longLivedUserToken, usedAppSecret, usedAppId, usedShortLivedToken;
+
+    // Check reference_page_id and reference_status
+    if (reference_status && typeof reference_page_id === "string") {
+      const referencePage = await Page.findOne({ page_id: reference_page_id });
+
+      if (!referencePage) {
+        return res.status(404).json({ message: "Reference page not found" });
+      }
+
+      // Use data from the reference page
+      longLivedUserToken = referencePage.long_lived_user_token;
+      usedAppSecret = referencePage.app_secret;
+      usedAppId = referencePage.app_id;
+      usedShortLivedToken = referencePage.short_lived_token;
+    } else {
+      // Generate Long-Lived User Token using the provided short-lived token
+      const longLivedUserTokenData = await createLongLivedToken(
+        short_lived_token,
+        app_id,
+        app_secret
+      );
+
+      if (!longLivedUserTokenData) {
+        return res
+          .status(400)
+          .json({ message: "Failed to create Long-Lived User Token" });
+      }
+
+      longLivedUserToken = longLivedUserTokenData.accessToken;
+      usedAppSecret = app_secret;
+      usedAppId = app_id;
+      usedShortLivedToken = short_lived_token;
     }
 
     // Create Page Access Token
     const longLivedPageToken = await getPageAccessToken(
-      longLivedUserTokenData.accessToken,
+      longLivedUserToken,
       page_id
     );
 
@@ -35,13 +64,13 @@ export const addPage = async (req, res) => {
     const newPage = new Page({
       page_name,
       page_id,
-      short_lived_token,
-      long_lived_user_token: longLivedUserTokenData.accessToken,
+      short_lived_token: usedShortLivedToken,
+      long_lived_user_token: longLivedUserToken,
       long_lived_page_token: longLivedPageToken,
-      app_id,
-      app_secret,
-      token_expiry: longLivedUserTokenData.expiryDate,
+      app_id: usedAppId,
+      app_secret: usedAppSecret,
     });
+
     await newPage.save();
 
     res.status(200).json({

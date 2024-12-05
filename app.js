@@ -5,7 +5,8 @@ import userRoutes from "./routes/userRoutes.js";
 import contentRoutes from "./routes/contentRoutes.js";
 import pageRoutes from "./routes/pageRoutes.js";
 import { scheduleJob } from "node-schedule";
-import { processArrayForDeleteOperation } from "./helpers/contentUploadHelpers.js";
+import { VideoUploadFbAndSendEmail } from "./helpers/contentUploadHelpers.js";
+import { sendEmail } from "./helpers/nodemailer.js";
 
 const app = express();
 
@@ -34,8 +35,7 @@ scheduleJob("0 0 */5 * *", () => {
   refreshAllTokens();
 });
 
-// const finalData = await processArrayForDeleteOperation();
-// console.log(JSON.stringify(finalData));
+// VideoUploadFbAndSendEmail();
 
 // Setting up schedules (Bangladesh Time)
 const scheduleTimes = [
@@ -46,10 +46,7 @@ const scheduleTimes = [
   "0 22 * * *",
 ];
 
-
 // Iterate over each schedule time and set up a job to call uploadAllPages at the specified time
 scheduleTimes.forEach((time) => scheduleJob(time, () => console.log("ok")));
-
-
 
 export default app;

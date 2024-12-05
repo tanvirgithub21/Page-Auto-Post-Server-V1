@@ -3,6 +3,8 @@ import mongoose from "mongoose";
 const pageSchema = new mongoose.Schema({
   page_name: String, // পেজের নাম
   page_id: String, // পেজের ID
+  reference_page_id: String,
+  reference_status: Boolean,
   short_lived_token: String, // Short-Lived User Access Token (শুধু প্রথমবার)
   long_lived_user_token: String, // Long-Lived User Access Token
   long_lived_page_token: String, // Long-Lived Page Access Token

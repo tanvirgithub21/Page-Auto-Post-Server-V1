@@ -2,6 +2,7 @@ import Content from "../models/Content.js";
 import Page from "../models/Page.js";
 import { deleteResourceByPublicId } from "./cloudinary.js";
 import { findContentByPageId } from "./curdContent.js";
+import { sendEmail } from "./nodemailer.js";
 
 // Function to start the video upload process
 const startVideoUploadPhase = async (facebookPageId, pageAccessToken) => {
@@ -88,7 +89,7 @@ const finishVideoUploadPhase = async (
   }
 };
 
-// Main function to upload a video to Facebook for a specific page
+// Function to upload a video to Facebook for a specific page
 export const uploadVideoToFacebookForPage = async (
   facebookPageId,
   pageAccessToken,
@@ -299,7 +300,7 @@ const handleDeleteOperation = async (item) => {
 };
 
 // Function to process the array and handle delete operations
-export const processArrayForDeleteOperation = async () => {
+const processArrayForDeleteOperation = async () => {
   try {
     const data = await uploadAndDeleteVideoContent();
 
@@ -319,3 +320,20 @@ export const processArrayForDeleteOperation = async () => {
     throw error;
   }
 };
+
+// Main function to upload a video to Facebook for a specific page and send mail
+export async function VideoUploadFbAndSendEmail() {
+  try {
+    const arrayData = await processArrayForDeleteOperation(); // Call the function to get the data
+
+    // Check if arrayData is an array
+    if (Array.isArray(arrayData)) {
+      sendEmail(arrayData); // Pass the array data to sendEmail
+    } else {
+      console.log("Data is not an array, skipping email sending.");
+    }
+  } catch (error) {
+    console.error("Error in VideoUploadFbAndSendEmail:", error);
+    // Optionally handle further, e.g., notify the user or retry
+  }
+}
