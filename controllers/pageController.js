@@ -2,7 +2,7 @@ import { handleError } from "../helpers/errorHandlingHelpers.js";
 import {
   createLongLivedToken,
   getPageAccessToken,
-  refreshAllTokens,
+  refreshAllUnRefTokens,
 } from "../helpers/tokenHelpers.js";
 import Page from "../models/Page.js";
 
@@ -19,7 +19,7 @@ export const addPage = async (req, res) => {
       reference_status,
     } = req.body || {};
 
-    let longLivedUserToken, usedAppSecret, usedAppId, usedShortLivedToken;
+    let longLivedUserToken, usedAppSecret, usedAppId, usedShortLivedToken, createWithRef;
 
     // Check reference_page_id and reference_status
     if (reference_status && typeof reference_page_id === "string") {
@@ -34,6 +34,7 @@ export const addPage = async (req, res) => {
       usedAppSecret = referencePage.app_secret;
       usedAppId = referencePage.app_id;
       usedShortLivedToken = referencePage.short_lived_token;
+      createWithRef = reference_page_id
     } else {
       // Generate Long-Lived User Token using the provided short-lived token
       const longLivedUserTokenData = await createLongLivedToken(
@@ -52,6 +53,7 @@ export const addPage = async (req, res) => {
       usedAppSecret = app_secret;
       usedAppId = app_id;
       usedShortLivedToken = short_lived_token;
+      createWithRef = false;
     }
 
     // Create Page Access Token
@@ -69,6 +71,7 @@ export const addPage = async (req, res) => {
       long_lived_page_token: longLivedPageToken,
       app_id: usedAppId,
       app_secret: usedAppSecret,
+      reference_page_id : createWithRef,
     });
 
     await newPage.save();
@@ -86,7 +89,7 @@ export const addPage = async (req, res) => {
 // Refresh all tokens
 export const refreshTokens = async (req, res) => {
   try {
-    await refreshAllTokens();
+    await refreshAllUnRefTokens();
     res.status(200).json({ message: "Tokens refreshed successfully." });
   } catch (error) {
     const errorDetails = handleError(error, "Error refreshing tokens");
