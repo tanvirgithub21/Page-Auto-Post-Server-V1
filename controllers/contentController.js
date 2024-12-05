@@ -1,4 +1,12 @@
 import Content from "../models/Content.js";
+import { v2 as cloudinary } from "cloudinary";
+
+// Configure Cloudinary
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
 
 // Add Content
 export const addContent = async (req, res) => {
@@ -71,5 +79,34 @@ export const deleteOneById = async (req, res) => {
       .json({ message: "Content deleted successfully!", data: content });
   } catch (err) {
     res.status(500).json({ message: "Error deleting content", error: err });
+  }
+};
+
+export const chackCloudinaryStorage = async (req, res) => {
+  try {
+    // স্টোরেজ ব্যবহারের তথ্য নেওয়া হচ্ছে
+    const usage = await cloudinary.api.usage();
+    // Extract storage usage data from usage
+    const usedStorageBytes = usage.storage.usage; // Storage used in bytes
+    const totalStorageGB = 25; // Free plan's total storage in GB
+
+    // Convert bytes to GB
+    const usedStorageGB = usedStorageBytes / 1073741824; // 1 GB = 1073741824 bytes
+
+    // Calculate remaining storage
+    const remainingStorageGB = totalStorageGB - usedStorageGB;
+
+    // Log the storage information
+    console.log("Total Storage: 25 GB (Free Plan)");
+    console.log("Used Storage:", usedStorageGB.toFixed(2), "GB");
+    console.log("Remaining Storage:", remainingStorageGB.toFixed(2), "GB");
+
+    res.json({
+      used_storage: usedStorageGB.toFixed(2), // ব্যবহৃত স্টোরেজ (GB)
+      total_torage: remainingStorageGB.toFixed(2), // মোট স্টোরেজ (GB) বা 'Not Available'
+    });
+  } catch (err) {
+    console.error("Error fetching Cloudinary storage info:", err);
+    res.status(500).json({ message: "Error fetching storage info" });
   }
 };

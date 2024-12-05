@@ -15,7 +15,9 @@ export const deleteResourceByPublicId = async (publicId) => {
   for (const resourceType of resourceTypes) {
     try {
       // Attempt to delete the resource
-      const result = await cloudinary.uploader.destroy(publicId, { resource_type: resourceType });
+      const result = await cloudinary.uploader.destroy(publicId, {
+        resource_type: resourceType,
+      });
 
       if (result.result === "ok") {
         return {

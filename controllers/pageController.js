@@ -6,6 +6,7 @@ import {
 } from "../helpers/tokenHelpers.js";
 import Page from "../models/Page.js";
 
+
 // Add a new page
 export const addPage = async (req, res) => {
   try {
@@ -19,7 +20,11 @@ export const addPage = async (req, res) => {
       reference_status,
     } = req.body || {};
 
-    let longLivedUserToken, usedAppSecret, usedAppId, usedShortLivedToken, createWithRef;
+    let longLivedUserToken,
+      usedAppSecret,
+      usedAppId,
+      usedShortLivedToken,
+      createWithRef;
 
     // Check reference_page_id and reference_status
     if (reference_status && typeof reference_page_id === "string") {
@@ -34,7 +39,7 @@ export const addPage = async (req, res) => {
       usedAppSecret = referencePage.app_secret;
       usedAppId = referencePage.app_id;
       usedShortLivedToken = referencePage.short_lived_token;
-      createWithRef = reference_page_id
+      createWithRef = reference_page_id;
     } else {
       // Generate Long-Lived User Token using the provided short-lived token
       const longLivedUserTokenData = await createLongLivedToken(
@@ -71,7 +76,7 @@ export const addPage = async (req, res) => {
       long_lived_page_token: longLivedPageToken,
       app_id: usedAppId,
       app_secret: usedAppSecret,
-      reference_page_id : createWithRef,
+      reference_page_id: createWithRef,
     });
 
     await newPage.save();
@@ -150,3 +155,5 @@ export const deletePageByPageId = async (req, res) => {
     res.status(500).json(errorDetails);
   }
 };
+
+
