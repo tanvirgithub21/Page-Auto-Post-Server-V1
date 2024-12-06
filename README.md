@@ -61,9 +61,9 @@ MONGO_URI=your_mongo_database_uri
 CLOUDINARY_CLOUD_NAME=your_cloud_name
 CLOUDINARY_API_KEY=your_api_key
 CLOUDINARY_API_SECRET=your_api_secret
-EMAIL_SERVICE=your_email_service
 EMAIL_USER=your_email_user
 EMAIL_PASSWORD=your_email_password
+CLIENT_URL=your_client_url
 ```
 
 ### **4. Run the server**

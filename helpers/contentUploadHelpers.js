@@ -4,7 +4,11 @@ import { deleteResourceByPublicId } from "./cloudinary.js";
 import { findContentByPageId } from "./curdContent.js";
 import { sendEmail } from "./nodemailer.js";
 
-// Function to start the video upload process
+// ============================
+// Video Upload Functions
+// ============================
+
+// Function to start the video upload phase
 const startVideoUploadPhase = async (facebookPageId, pageAccessToken) => {
   try {
     console.log("Starting video upload phase...");
@@ -12,9 +16,7 @@ const startVideoUploadPhase = async (facebookPageId, pageAccessToken) => {
       `https://graph.facebook.com/v21.0/${facebookPageId}/video_reels`,
       {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           upload_phase: "start",
           access_token: pageAccessToken,
@@ -115,6 +117,10 @@ export const uploadVideoToFacebookForPage = async (
   }
 };
 
+// ============================
+// Content and Page Handling Functions
+// ============================
+
 // Function to fetch all pages from the database
 const fetchAllPages = async () => {
   try {
@@ -149,10 +155,7 @@ const processPagesAndUploadVideos = async (pages) => {
 const processSinglePage = async (page) => {
   console.log(`Processing page: ${page.page_name} (ID: ${page.page_id})`);
   try {
-    // Fetch content data for the page
     const contentData = await fetchContentForPage(page.page_id);
-
-    // Upload the content to Facebook
     const uploadResult = await uploadContentToFacebook(page, contentData);
 
     return {
@@ -197,83 +200,9 @@ const uploadContentToFacebook = async (page, contentData) => {
   );
 };
 
-// Function to handle unexpected errors during the process
-const handleUnexpectedError = (error) => {
-  console.error("Unexpected error during upload process:", error.message);
-  return {
-    success: false,
-    message: "Unexpected error during upload process",
-    error: error.message,
-  };
-};
-
-// Main function to upload videos for all pages
-const uploadVideosForAllPages = async () => {
-  try {
-    console.log("Starting the video upload process for all pages...");
-
-    // Fetch all pages
-    const pages = await fetchAllPages();
-
-    // If no pages are found, return appropriate response
-    if (!pages.length) {
-      return handleNoPagesFound();
-    }
-
-    // Process each page and collect the results
-    const uploadResults = await processPagesAndUploadVideos(pages);
-
-    console.log("Video upload process for all pages completed.");
-
-    return {
-      success: true,
-      message: "Video upload process completed.",
-      details: uploadResults,
-    };
-  } catch (error) {
-    return handleUnexpectedError(error);
-  }
-};
-
-// Function to process the video upload and delete resources
-const uploadAndDeleteVideoContent = async () => {
-  const uploadedFb = await uploadVideosForAllPages();
-  if (uploadedFb.success && uploadedFb.details) {
-    // Iterate through all uploaded video content and delete resources
-    const results = await Promise.all(
-      uploadedFb.details.map(async (item) => {
-        console.log({ first: item });
-        if (item.success && item.public_id) {
-          try {
-            const deleteResult = await deleteResourceByPublicId(item.public_id);
-            if (deleteResult.status === 200) {
-              return {
-                ...item,
-                public_id: true, // Mark public_id as true after successful deletion
-                delete_message: deleteResult.message,
-              };
-            } else {
-              return {
-                ...item,
-                public_id: false, // Mark public_id as false if deletion fails
-                delete_message: deleteResult.message || "Deletion failed",
-              };
-            }
-          } catch (err) {
-            return {
-              ...item,
-              public_id: false,
-              delete_message: err.message || "Error during deletion",
-            };
-          }
-        }
-        return item; // If no success or public_id missing, return as is
-      })
-    );
-
-    return results;
-  }
-};
+// ============================
+// Resource Deletion Functions
+// ============================
 
 // Function to handle the delete operation in the database
 const handleDeleteOperation = async (item) => {
@@ -304,7 +233,6 @@ const processArrayForDeleteOperation = async () => {
   try {
     const data = await uploadAndDeleteVideoContent();
 
-    // Iterate over the array and process each item
     const processedArray = await Promise.all(
       data.map(async (item) => {
         if (item.success === true && item.public_id === true) {
@@ -321,19 +249,96 @@ const processArrayForDeleteOperation = async () => {
   }
 };
 
-// Main function to upload a video to Facebook for a specific page and send mail
+// ============================
+// Main Functions
+// ============================
+
+// Main function to upload videos for all pages
+const uploadVideosForAllPages = async () => {
+  try {
+    console.log("Starting the video upload process for all pages...");
+    const pages = await fetchAllPages();
+
+    if (!pages.length) {
+      return handleNoPagesFound();
+    }
+
+    const uploadResults = await processPagesAndUploadVideos(pages);
+
+    console.log("Video upload process for all pages completed.");
+
+    return {
+      success: true,
+      message: "Video upload process completed.",
+      details: uploadResults,
+    };
+  } catch (error) {
+    return handleUnexpectedError(error);
+  }
+};
+
+// Function to upload and delete video content
+const uploadAndDeleteVideoContent = async () => {
+  const uploadedFb = await uploadVideosForAllPages();
+  if (uploadedFb.success && uploadedFb.details) {
+    const results = await Promise.all(
+      uploadedFb.details.map(async (item) => {
+        if (item.success && item.public_id) {
+          try {
+            const deleteResult = await deleteResourceByPublicId(item.public_id);
+            return {
+              ...item,
+              public_id: deleteResult.status === 200,
+              delete_message: deleteResult.message,
+            };
+          } catch (err) {
+            return {
+              ...item,
+              public_id: false,
+              delete_message: err.message || "Error during deletion",
+            };
+          }
+        }
+        return item;
+      })
+    );
+    return results;
+  }
+};
+
+// Function to handle unexpected errors during the process
+const handleUnexpectedError = (error) => {
+  console.error("Unexpected error during upload process:", error.message);
+  return {
+    success: false,
+    message: "Unexpected error during upload process",
+    error: error.message,
+  };
+};
+
+// Function to upload a video to Facebook for a specific page and send mail
 export async function VideoUploadFbAndSendEmail() {
   try {
-    const arrayData = await processArrayForDeleteOperation(); // Call the function to get the data
-
-    // Check if arrayData is an array
+    const arrayData = await processArrayForDeleteOperation();
     if (Array.isArray(arrayData)) {
-      sendEmail(arrayData); // Pass the array data to sendEmail
-    } else {
-      console.log("Data is not an array, skipping email sending.");
+      console.log("Sending email with results...");
+      await sendEmail(arrayData);
+      return {
+        success: true,
+        message: "Video upload and email sent successfully.",
+        details: arrayData,
+      };
     }
+    return {
+      success: false,
+      message: "Error processing video upload and email.",
+    };
   } catch (error) {
-    console.error("Error in VideoUploadFbAndSendEmail:", error);
-    // Optionally handle further, e.g., notify the user or retry
+    console.error("Error in video upload and email process:", error.message);
+    return {
+      success: false,
+      message: "Error in video upload and email process.",
+      error: error.message,
+    };
   }
 }

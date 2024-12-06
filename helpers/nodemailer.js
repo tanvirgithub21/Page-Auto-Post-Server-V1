@@ -1,5 +1,6 @@
 import nodemailer from "nodemailer";
 
+// Function to generate a responsive email template
 function generateResponsiveEmail(data) {
   return `
 <!DOCTYPE html>
@@ -116,29 +117,28 @@ function generateResponsiveEmail(data) {
   `;
 }
 
-
-
-export const sendEmail = async (data) => {
-  let transporter = nodemailer.createTransport({
-    service: "gmail",
-    auth: {
-      user: process.env.EMAIL_USER, // Use email from .env file
-      pass: process.env.EMAIL_PASS, // Use app password from .env file
-    },
-  });
-
-  let mailOptions = {
-    from: process.env.EMAIL_USER,
-    to: "tanvir.bd.global@gmail.com",
-    subject: "Test Email",
-    text: "This is a test email sent using nodemailer!",
-    html: generateResponsiveEmail(data)
-  };
-
+// Function to send an email
+export const sendEmail = async (data, recipientEmail = "tanvir.bd.global@gmail.com") => {
   try {
+    let transporter = nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        user: process.env.EMAIL_USER, // Use email from .env file
+        pass: process.env.EMAIL_PASSWORD, // Use app password from .env file
+      },
+    });
+
+    let mailOptions = {
+      from: process.env.EMAIL_USER,
+      to: recipientEmail,
+      subject: "Upload Status Update",
+      text: "Please find the details of the upload status in the attached HTML content.",
+      html: generateResponsiveEmail(data),
+    };
+
     let info = await transporter.sendMail(mailOptions);
     console.log("Email sent:", info.response);
   } catch (error) {
-    console.error("Error sending email:", error);
+    console.error("Error sending email:", error.message || error);
   }
 };

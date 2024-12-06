@@ -6,8 +6,7 @@ import {
 } from "../helpers/tokenHelpers.js";
 import Page from "../models/Page.js";
 
-
-// Add a new page
+// Add a new page with tokens and optional reference page data
 export const addPage = async (req, res) => {
   try {
     const {
@@ -26,7 +25,7 @@ export const addPage = async (req, res) => {
       usedShortLivedToken,
       createWithRef;
 
-    // Check reference_page_id and reference_status
+    // If reference page is specified, use its tokens and app data
     if (reference_status && typeof reference_page_id === "string") {
       const referencePage = await Page.findOne({ page_id: reference_page_id });
 
@@ -34,14 +33,14 @@ export const addPage = async (req, res) => {
         return res.status(404).json({ message: "Reference page not found" });
       }
 
-      // Use data from the reference page
+      // Reuse tokens and app credentials from the reference page
       longLivedUserToken = referencePage.long_lived_user_token;
       usedAppSecret = referencePage.app_secret;
       usedAppId = referencePage.app_id;
       usedShortLivedToken = referencePage.short_lived_token;
       createWithRef = reference_page_id;
     } else {
-      // Generate Long-Lived User Token using the provided short-lived token
+      // Generate Long-Lived User Token using the provided credentials
       const longLivedUserTokenData = await createLongLivedToken(
         short_lived_token,
         app_id,
@@ -61,7 +60,7 @@ export const addPage = async (req, res) => {
       createWithRef = false;
     }
 
-    // Create Page Access Token
+    // Generate a Page Access Token
     const longLivedPageToken = await getPageAccessToken(
       longLivedUserToken,
       page_id
@@ -86,15 +85,16 @@ export const addPage = async (req, res) => {
       page: newPage,
     });
   } catch (error) {
+    // Handle errors and return a meaningful response
     const errorDetails = handleError(error, "Error adding page");
     res.status(500).json(errorDetails);
   }
 };
 
-// Refresh all tokens
+// Refresh all unreferenced tokens for pages
 export const refreshTokens = async (req, res) => {
   try {
-    await refreshAllUnRefTokens();
+    await refreshAllUnRefTokens(); // Refresh tokens in helper
     res.status(200).json({ message: "Tokens refreshed successfully." });
   } catch (error) {
     const errorDetails = handleError(error, "Error refreshing tokens");
@@ -102,7 +102,7 @@ export const refreshTokens = async (req, res) => {
   }
 };
 
-// Get all pages
+// Get a list of all pages with basic information
 export const findAllPage = async (req, res) => {
   try {
     const pages = await Page.find().select({
@@ -110,6 +110,7 @@ export const findAllPage = async (req, res) => {
       page_id: 1,
       _id: 1,
     });
+
     if (pages.length === 0) {
       return res.status(404).json({ message: "No pages found" });
     }
@@ -120,10 +121,10 @@ export const findAllPage = async (req, res) => {
   }
 };
 
-// Get a page by page name
+// Get details of a single page by its name
 export const findOnePageByPageName = async (req, res) => {
   try {
-    const { page_name } = req.params;
+    const { page_name } = req.params; // Extract page name from URL parameters
     const page = await Page.findOne({ page_name });
 
     if (!page) {
@@ -138,10 +139,10 @@ export const findOnePageByPageName = async (req, res) => {
   }
 };
 
-// Delete a page by ID
+// Delete a page by its ID
 export const deletePageByPageId = async (req, res) => {
   try {
-    const { id } = req.params;
+    const { id } = req.params; // Extract ID from URL parameters
     const page = await Page.findByIdAndDelete(id);
 
     if (!page) {
@@ -155,5 +156,3 @@ export const deletePageByPageId = async (req, res) => {
     res.status(500).json(errorDetails);
   }
 };
-
-
