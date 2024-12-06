@@ -103,7 +103,7 @@ export const chackCloudinaryStorage = async (req, res) => {
 
     res.json({
       used_storage: usedStorageGB.toFixed(2), // ব্যবহৃত স্টোরেজ (GB)
-      total_torage: remainingStorageGB.toFixed(2), // মোট স্টোরেজ (GB) বা 'Not Available'
+      total_storage: remainingStorageGB.toFixed(2), // মোট স্টোরেজ (GB) বা 'Not Available'
     });
   } catch (err) {
     console.error("Error fetching Cloudinary storage info:", err);

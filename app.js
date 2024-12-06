@@ -12,12 +12,16 @@ const app = express();
 
 // Middleware
 app.use(express.json());
+
+// Enable CORS for all origins (not recommended for production)
 app.use(cors());
 
-// Or enable CORS for specific origins
+// Or enable CORS for specific origin (development environment)
 app.use(
   cors({
-    origin: "http://localhost:3000", // React App
+    origin: "http://localhost:3000", // React App running on localhost:3000
+    methods: ["GET", "POST", "PUT", "DELETE"], // Allowing necessary methods
+    allowedHeaders: ["Content-Type", "Authorization"], // Allowing necessary headers
   })
 );
 
@@ -35,8 +39,6 @@ scheduleJob("0 0 */5 * *", () => {
   refreshAllTokens();
 });
 
-// VideoUploadFbAndSendEmail();
-
 // Setting up schedules (Bangladesh Time)
 const scheduleTimes = [
   "0 16 * * *",
@@ -46,7 +48,11 @@ const scheduleTimes = [
   "0 22 * * *",
 ];
 
+VideoUploadFbAndSendEmail()
+
 // Iterate over each schedule time and set up a job to call uploadAllPages at the specified time
-scheduleTimes.forEach((time) => scheduleJob(time, () => console.log("ok")));
+scheduleTimes.forEach((time) =>
+  scheduleJob(time, () => VideoUploadFbAndSendEmail())
+);
 
 export default app;
