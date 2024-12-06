@@ -46,7 +46,7 @@ const scheduleTimes = [
   "0 21 * * *", // 9:00 PM (Bangladesh Time)
   "0 22 * * *", // 10:00 PM (Bangladesh Time)
 ];
-VideoUploadFbAndSendEmail();
+
 // Schedule content upload and email sending at the specified times
 scheduleTimes.forEach((time) =>
   scheduleJob(time, () => {

@@ -131,7 +131,7 @@ export const sendEmail = async (data, recipientEmail = "tanvir.bd.global@gmail.c
     let mailOptions = {
       from: process.env.EMAIL_USER,
       to: recipientEmail,
-      subject: "Upload Status Update",
+      subject: "Video Upload Status Update",
       text: "Please find the details of the upload status in the attached HTML content.",
       html: generateResponsiveEmail(data),
     };
