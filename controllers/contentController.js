@@ -1,5 +1,7 @@
 import Content from "../models/Content.js";
 import { v2 as cloudinary } from "cloudinary";
+import mime from "mime";
+import fs from "fs-extra";
 
 // Configure Cloudinary with environment variables
 cloudinary.config({
@@ -10,25 +12,76 @@ cloudinary.config({
 
 // Add new content to the database
 export const addContent = async (req, res) => {
-  const contentData = req.body; // Content data received from the client
+  try {
+    // Process each file asynchronously
+    const uploadPromises = req.files.map(async (file) => {
+      // Check file existence
+      if (!(await fs.pathExists(file.path))) {
+        throw new Error(`File path ${file.path} does not exist`);
+      }
 
-  const newContent = new Content(contentData);
+      // Validate MIME type (allow images and videos)
+      const mimeType = mime.getType(file.path);
+      if (!mimeType.startsWith("image") && !mimeType.startsWith("video")) {
+        throw new Error(
+          `Unsupported file format: ${mimeType}. Only images and videos are allowed.`
+        );
+      }
 
-  // Save content to the database
-  newContent
-    .save()
-    .then((data) =>
-      res.status(200).json({
-        data,
-        message: "Content data saved successfully!",
-      })
-    )
-    .catch((err) =>
-      res.status(500).json({
-        message: "Error saving content data",
-        error: err,
-      })
-    );
+      // Determine Cloudinary folder based on file type
+      const uploadFolder = mimeType.startsWith("image")
+        ? `images${req?.body?.page_id || ""}`
+        : `videos${req?.body?.page_id || ""}`;
+
+      console.log(`Uploading file: ${file.path}, MIME type: ${mimeType}`);
+
+      // Upload to Cloudinary
+      const result = await cloudinary.uploader.upload(file.path, {
+        resource_type: "auto",
+        folder: uploadFolder,
+      });
+
+      console.log("Upload result:", result);
+
+      // Delete the local file
+      await fs.unlink(file.path);
+
+      // Prepare content data
+      const contentData = {
+        secure_url: result.secure_url,
+        type: mimeType,
+        original_name: file.originalname,
+        public_id: result.public_id,
+        content_type: req?.body?.content_type || "default",
+        duration: result.duration,
+        page_id: req?.body?.page_id || "unknown",
+        server_id: "auto",
+        description: req?.body?.description || "",
+        playback_url: result.playback_url || null,
+      };
+
+      // Save content to the database
+      const newContent = new Content(contentData);
+      return await newContent.save();
+    });
+
+    // Wait for all files to be uploaded and saved
+    const uploadedFiles = await Promise.all(uploadPromises);
+
+    console.log("Uploaded Files:", uploadedFiles);
+
+    // Send response with uploaded file details
+    res.json({
+      message: "Files uploaded successfully",
+      files: uploadedFiles,
+    });
+  } catch (error) {
+    console.error("Error uploading files:", error);
+    res.status(400).json({
+      message: error.message || "Error uploading files",
+      error,
+    });
+  }
 };
 
 // Fetch all content by page name

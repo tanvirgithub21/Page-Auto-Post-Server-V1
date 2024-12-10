@@ -1,16 +1,17 @@
 import express from "express";
 import {
-  addContent,
   findAllByPageName,
   findOneByPageName,
   deleteOneById,
-  checkCloudinaryStorage, // Fixed spelling for consistency
+  checkCloudinaryStorage,
+  addContent, // Fixed spelling for consistency
 } from "../controllers/contentController.js";
+import { uploadFiles } from "../controllers/uploadController.js";
 
 const router = express.Router();
 
 // Route for adding content
-router.post("/add", addContent);
+router.post("/add", uploadFiles, addContent);
 
 // Route for finding all content by page name
 router.get("/find-all/:page_name", findAllByPageName);

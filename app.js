@@ -6,20 +6,30 @@ import pageRoutes from "./routes/pageRoutes.js";
 import { scheduleJob } from "node-schedule";
 import { VideoUploadFbAndSendEmail } from "./helpers/contentUploadHelpers.js";
 import { refreshAllTokens } from "./helpers/tokenHelpers.js";
+import path from "path";
+import { fileURLToPath } from "url";
 
 // Initialize express app
 const app = express();
 
-// Middleware for JSON request parsing
+// Resolve __dirname for ES modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Middleware to parse JSON and URL-encoded data
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// Serve static files (e.g., uploaded files)
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 // Enable CORS for specific origin (for development environment)
 const allowedOrigin = process.env.CLIENT_URL
   ? process.env.CLIENT_URL
-  : "http://localhost:3000";
+  : "http://localhost:5173";
 app.use(
   cors({
-    origin: allowedOrigin, // Your App running 
+    origin: allowedOrigin, // Your App running
     methods: ["GET", "POST", "PUT", "DELETE"], // Allowing necessary methods
     allowedHeaders: ["Content-Type", "Authorization"], // Allowing necessary headers
   })
