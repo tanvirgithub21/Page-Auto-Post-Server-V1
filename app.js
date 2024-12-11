@@ -26,7 +26,7 @@ app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 // Enable CORS for specific origin (for development environment)
 const allowedOrigin = process.env.CLIENT_URL
   ? process.env.CLIENT_URL
-  : "http://localhost:5173";
+  : "https://reels-vipe-net.netlify.app";
 app.use(
   cors({
     origin: allowedOrigin, // Your App running
