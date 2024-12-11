@@ -17,6 +17,7 @@ export const addPage = async (req, res) => {
       app_secret,
       reference_page_id,
       reference_status,
+      page_location,
     } = req.body || {};
 
     let longLivedUserToken,
@@ -76,6 +77,7 @@ export const addPage = async (req, res) => {
       app_id: usedAppId,
       app_secret: usedAppSecret,
       reference_page_id: createWithRef,
+      page_location,
     });
 
     await newPage.save();

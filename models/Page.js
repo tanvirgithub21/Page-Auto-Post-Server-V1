@@ -10,6 +10,7 @@ const pageSchema = new mongoose.Schema({
   long_lived_page_token: String, // Long-Lived Page Access Token
   app_id: String, // App ID of the page
   app_secret: String, // App Secret of the page
+  page_location: Number, // Default to London
   token_expiry: mongoose.Schema.Types.Mixed, // Expiry time of the Long-Lived User Token
   last_updated: { type: Date, default: Date.now }, // Date of the last update
 });

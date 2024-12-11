@@ -67,13 +67,14 @@ const finishVideoUploadPhase = async (
   facebookPageId,
   pageAccessToken,
   videoId,
-  videoDescription
+  videoDescription,
+  page_location
 ) => {
   try {
     console.log("Finishing video upload phase...");
     const finishUrl = `https://graph.facebook.com/v21.0/${facebookPageId}/video_reels?access_token=${pageAccessToken}&video_id=${videoId}&upload_phase=finish&video_state=PUBLISHED&description=${encodeURIComponent(
       videoDescription
-    )}`;
+    )}&place=${page_location}`;
     const response = await fetch(finishUrl, {
       method: "POST",
     });
@@ -96,7 +97,8 @@ export const uploadVideoToFacebookForPage = async (
   facebookPageId,
   pageAccessToken,
   videoFileUrl,
-  videoDescription
+  videoDescription,
+  page_location
 ) => {
   try {
     const { video_id, upload_url } = await startVideoUploadPhase(
@@ -108,7 +110,8 @@ export const uploadVideoToFacebookForPage = async (
       facebookPageId,
       pageAccessToken,
       video_id,
-      videoDescription
+      videoDescription,
+      page_location
     );
     return result;
   } catch (error) {
@@ -196,7 +199,8 @@ const uploadContentToFacebook = async (page, contentData) => {
     page.page_id,
     page.long_lived_page_token,
     contentData.secure_url,
-    contentData.description
+    contentData.description,
+    page.page_location
   );
 };
 

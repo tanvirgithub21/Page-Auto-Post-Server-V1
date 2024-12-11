@@ -64,5 +64,5 @@ scheduleTimes.forEach((time) =>
     VideoUploadFbAndSendEmail();
   })
 );
-
+// VideoUploadFbAndSendEmail();
 export default app;
