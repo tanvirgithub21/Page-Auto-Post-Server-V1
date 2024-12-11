@@ -8,6 +8,7 @@ import { VideoUploadFbAndSendEmail } from "./helpers/contentUploadHelpers.js";
 import { refreshAllTokens } from "./helpers/tokenHelpers.js";
 import path from "path";
 import { fileURLToPath } from "url";
+import { uploadPhotoForAllPages } from "./helpers/facebookPhotoPost.js";
 
 // Initialize express app
 const app = express();
@@ -64,5 +65,24 @@ scheduleTimes.forEach((time) =>
     VideoUploadFbAndSendEmail();
   })
 );
+// Setting up schedules for content upload (Bangladesh Time)
+const scheduleTimesForPhoto = [
+  "0 13 * * *", // দুপুর ১:০০ (লন্ডন সকাল ৭টা)
+  "0 18 * * *", // সন্ধ্যা ৬:০০ (লন্ডন দুপুর ১২টা)
+  "0 21 * * *", // রাত ৯:০০ (লন্ডন বিকাল ৩টা)
+  "0 0 * * *", // রাত ১২:০০ (লন্ডন সন্ধ্যা ৬টা)
+  "0 3 * * *", // ভোর ৩:০০ (লন্ডন রাত ৯টা)
+];
+
+// Schedule content upload and email sending at the specified times
+scheduleTimesForPhoto.forEach((time) =>
+  scheduleJob(time, () => {
+    console.log(`Scheduled video upload and email sending at ${time}.`);
+    uploadPhotoForAllPages();
+  })
+);
+
 // VideoUploadFbAndSendEmail();
+
+
 export default app;
