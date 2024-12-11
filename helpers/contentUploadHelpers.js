@@ -183,7 +183,7 @@ const processSinglePage = async (page) => {
 
 // Function to fetch content data for a specific page
 const fetchContentForPage = async (facebookPageId) => {
-  const result = await findContentByPageId(facebookPageId);
+  const result = await findContentByPageId(facebookPageId, "Video");
   if (result.status !== 200) {
     throw new Error("Error finding content");
   }

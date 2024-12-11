@@ -1,10 +1,10 @@
 import Content from "../models/Content.js";
 
 // Function to find content by page ID
-export const findContentByPageId = async (pageId) => {
+export const findContentByPageId = async (pageId, content_type) => {
   try {
     // Search for content based on page ID
-    const content = await Content.findOne({ page_id: pageId });
+    const content = await Content.findOne({ page_id: pageId, content_type: content_type });
 
     if (!content) {
       return {
