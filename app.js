@@ -83,13 +83,5 @@ scheduleTimesForPhoto.forEach((time) =>
   })
 );
 
-// VideoUploadFbAndSendEmail();
-let count = 0;
-setInterval(async () => {
-  count++;
-  console.log(`Calling function for the ${count} time.`);
-  const data = await Page.find();
-  console.log(data);
-}, 120000);
 
 export default app;

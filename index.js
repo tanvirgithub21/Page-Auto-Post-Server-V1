@@ -1,5 +1,6 @@
 import app from './app.js';
 import dotenv from 'dotenv';
+import http from 'http';
 
 dotenv.config();
 
@@ -9,6 +10,12 @@ const PORT = process.env.PORT || 5000;
 const server = app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
+
+// Keep-Alive: প্রতি ৫ মিনিট পর পর পিং পাঠানো
+setInterval(() => {
+  http.get(`http://localhost:${PORT}`);
+  console.log('Keep-Alive: সার্ভার পিং করা হলো');
+}, 5 * 60 * 1000); // প্রতি ৫ মিনিটে পিং হবে
 
 // Handle uncaught exceptions
 process.on('uncaughtException', (err) => {
