@@ -116,9 +116,83 @@ function generateResponsiveEmail(data) {
 </html>
   `;
 }
+function generateEmailTemplatePhoto(results) {
+  const emailHeader = `
+    <h1>Photo Upload Report</h1>
+    <p>This report contains the status of the photo upload process for each page.</p>
+  `;
+
+  const emailBody = results
+    .map((result) => {
+      const stepsDetails = Object.entries(result.steps)
+        .map(([step, details]) => {
+          if (details.success) {
+            return `
+              <li>
+                <strong>${step}:</strong> Success ${
+              details.postId
+                ? `(Post ID: ${details.postId})`
+                : details.photoId
+                ? `(Photo ID: ${details.photoId})`
+                : ""
+            }
+              </li>`;
+          } else {
+            return `
+              <li>
+                <strong>${step}:</strong> Failed ${
+              details.message ? `- ${details.message}` : ""
+            }
+              </li>`;
+          }
+        })
+        .join("");
+
+      return `
+        <div style="margin-bottom: 20px; border: 1px solid #ddd; padding: 10px;">
+          <h2>Page ID: ${result.pageId}</h2>
+          <p><strong>Overall Status:</strong> ${
+            result.success ? "Success" : "Failed"
+          }</p>
+          <ul>
+            ${stepsDetails}
+          </ul>
+        </div>
+      `;
+    })
+    .join("");
+
+  const emailFooter = `
+    <p>End of report. Thank you.</p>
+  `;
+
+  return `
+    <html>
+      <head>
+        <style>
+          body { font-family: Arial, sans-serif; }
+          h1 { color: #333; }
+          h2 { color: #555; }
+          ul { padding-left: 20px; }
+          li { margin-bottom: 5px; }
+          p { margin: 10px 0; }
+        </style>
+      </head>
+      <body>
+        ${emailHeader}
+        ${emailBody}
+        ${emailFooter}
+      </body>
+    </html>
+  `;
+}
 
 // Function to send an email
-export const sendEmail = async (data, recipientEmail = "tanvir.bd.global@gmail.com") => {
+export const sendEmail = async (
+  data,
+  type = "video",
+  recipientEmail = "tanvir.bd.global@gmail.com"
+) => {
   try {
     let transporter = nodemailer.createTransport({
       service: "gmail",
@@ -133,7 +207,10 @@ export const sendEmail = async (data, recipientEmail = "tanvir.bd.global@gmail.c
       to: recipientEmail,
       subject: "Video Upload Status Update",
       text: "Please find the details of the upload status in the attached HTML content.",
-      html: generateResponsiveEmail(data),
+      html:
+        type == "video"
+          ? generateResponsiveEmail(data)
+          : generateEmailTemplatePhoto(data),
     };
 
     let info = await transporter.sendMail(mailOptions);

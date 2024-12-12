@@ -82,6 +82,8 @@ scheduleTimesForPhoto.forEach((time) =>
     uploadPhotoForAllPages();
   })
 );
+// uploadPhotoForAllPages();
+
 
 
 export default app;
