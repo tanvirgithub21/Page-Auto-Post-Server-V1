@@ -82,7 +82,5 @@ scheduleTimesForPhoto.forEach((time) =>
   })
 );
 
-VideoUploadFbAndSendEmail();
-
 
 export default app;

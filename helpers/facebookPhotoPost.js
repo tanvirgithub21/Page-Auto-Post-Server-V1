@@ -3,7 +3,7 @@ import Page from "../models/Page.js";
 import { deleteResourceByPublicId } from "./cloudinary.js";
 import axios from "axios";
 
-function uploadPhotoFromUrl(pageId, accessToken, photoUrl, caption) {
+function uploadPhotoFromUrl(pageId, accessToken, photoUrl, caption, location) {
   return new Promise(async (resolve) => {
     try {
       const url = `https://graph.facebook.com/v17.0/${pageId}/photos`;
@@ -11,6 +11,7 @@ function uploadPhotoFromUrl(pageId, accessToken, photoUrl, caption) {
         url: photoUrl,
         caption: caption,
         access_token: accessToken,
+        ...(location && { place: location }),
       };
 
       const response = await axios.post(url, params);
@@ -45,14 +46,15 @@ export async function uploadPhotoForAllPages() {
           return null;
         }
 
-        const { page_id, long_lived_page_token, _id } = page;
-        const { secure_url, public_id, description } = content;
+        const { page_id, long_lived_page_token, page_location, _id } = page;
+        const { secure_url, public_id, description } = content; // Assume `location` contains { placeId }
 
         const uploadResult = await uploadPhotoFromUrl(
           page_id,
           long_lived_page_token,
           secure_url,
-          description
+          description,
+          page_location
         );
 
         if (uploadResult.status) {
