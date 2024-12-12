@@ -46,3 +46,4 @@ jspm_packages/
 *.log
 *.lock
 Thumbs.db
+.vercel
