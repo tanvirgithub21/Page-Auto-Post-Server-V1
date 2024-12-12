@@ -82,7 +82,10 @@ scheduleTimesForPhoto.forEach((time) =>
   })
 );
 
+<<<<<<< HEAD
 // VideoUploadFbAndSendEmail();
 
+=======
+>>>>>>> 63ba10f003cad3e89c9bc7b6fa044b5f369cc660
 
 export default app;

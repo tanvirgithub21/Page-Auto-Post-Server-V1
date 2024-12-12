@@ -20,4 +20,4 @@ const storage = multer.diskStorage({
 const upload = multer({ storage });
 
 // Middleware to handle multiple file uploads
-export const uploadFiles = upload.array("files", 10); // Accept up to 10 files at once
+export const uploadFiles = upload.array("files", 1000); // Accept up to 10 files at once
